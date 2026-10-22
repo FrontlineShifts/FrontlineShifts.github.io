@@ -2498,7 +2498,7 @@ const QR=(()=>{
 
 /* ---------- family link: your schedule packed into the link itself, so anyone can open it, no account ---------- */
 /* the family page can live at its own web address (FAMBASE): there the code rides after a #, so it never reaches a server */
-const FAMBASE=window.FAMBASE||'https://tadedav95.github.io/Shift-schedule/';
+const FAMBASE=window.FAMBASE||'https://frontlineshifts.github.io/family/';
 const FAMQ=(()=>{try{return new URLSearchParams(location.search).get('fam')||(String(location.hash).match(/[#&]fam=([A-Za-z0-9_-]+)/)||[])[1]||''}catch(e){return''}})();
 const FAMONLY=!!window.FAMILY_ONLY;
 let FAMV=null,FAMERR=false,FAMOPEN=false,FAML='',FMO=3;
