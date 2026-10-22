@@ -1,7 +1,8 @@
-# Shift schedule
+# Frontline Shifts
 
-The family page for the shift planner. Someone shares their schedule as a QR code or link;
-opening it here shows their shifts, booked time off and extra work.
+The website for Frontline Shifts, the shift calendar for police, fire, EMS and nurses.
 
-The schedule travels inside the link itself, after the `#`, so it never reaches this server
-and nothing about anyone is stored here. Pay and private notes are never included.
+- `/` — the home page.
+- `/family/` — the family page. Someone shares their schedule as a QR code or link, and it opens here.
+  The schedule travels inside the link itself, after the `#`, so it never reaches this server and nothing
+  about anyone is stored here. Pay and private notes are never included.
