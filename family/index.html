@@ -196,6 +196,43 @@ border-radius:3px;background:var(--ln)}
 .shb{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 16px}
 .shb .card:last-of-type{margin-bottom:0}
 body.lock{overflow:hidden}
+.obtop{display:flex;align-items:center;gap:12px;margin:2px 0 16px}
+.obcta,.obskip,.obsso .btn,.objobs .btn,button.btn.full[data-a^="ob"],button.btn.full[data-a^="sub"],button.btn.full[data-a^="tj"],button.btn.full[data-a="tpjoin"]{display:flex;width:100%;justify-content:center;align-items:center}
+.form label svg{display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:4px}
+.objobs .btn.objob{justify-content:flex-start;gap:12px;padding:0 18px}
+.objob svg{width:22px;height:22px;flex:none}
+.obbar{flex:1;height:8px;border-radius:5px;background:var(--ln);overflow:hidden}
+.obbar i{display:block;height:100%;background:var(--ac);border-radius:5px}
+.obn{font-size:13px;flex:none}
+.oblead{margin:4px 0 16px;font-size:16px}
+.obhero{text-align:center;margin-top:60px;padding:4px 0 8px}
+.obhero h1{font-size:38px;margin-top:18px}
+.oblogo{width:84px;height:84px;margin:0 auto;border-radius:22px;background:#1f4e8c;display:grid;place-items:center;color:#fff}
+.oblogo svg{width:52px;height:52px}
+.obpts{display:grid;gap:14px}
+.obpt{display:flex;gap:12px;align-items:flex-start}
+.obpt>i{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.obpt>i svg{width:20px;height:20px}
+.obpt b{display:block}.obpt span{display:block;font-size:14px}
+.obcta{margin-top:14px;min-height:52px;font-size:17px}
+.obskip{margin-top:8px}
+.obsso{display:grid;gap:10px;margin-bottom:14px}
+.btn.sso{min-height:50px;background:var(--sf);color:var(--ink);border:1px solid var(--ln)}
+.btn.sso.dark{background:#000;color:#fff;border-color:#000}
+.obor{display:flex;align-items:center;gap:10px;color:var(--mu);font-size:13px}
+.obor::before,.obor::after{content:"";flex:1;height:1px;background:var(--ln)}
+.objobs{display:grid;gap:10px}
+.objob{justify-content:flex-start;min-height:52px;gap:10px}
+.objob svg{width:20px;height:20px}
+.fine{font-size:12.5px;margin:10px 2px 0;line-height:1.45}
+.fine.prev{color:var(--c6)}
+.obprev{display:flex;flex-direction:column;gap:8px;border-color:var(--ac)}
+.plans{display:grid;gap:10px;margin-top:4px}
+.plan{display:grid;gap:2px;text-align:left;padding:14px 16px;border-radius:14px;border:2px solid var(--ln);background:var(--sf);color:var(--ink);font:inherit;cursor:pointer}
+.plan.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--sf))}
+.plan .pr{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.plan .pp{font-size:15px}.plan .pp b{font-size:20px}
+.best{font-style:normal;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--ac);color:#fff}
 .qrbox{background:#fff;border-radius:14px;padding:8px;margin:2px auto 10px;width:100%;max-width:272px;box-sizing:border-box}
 .qrbox svg{display:block;width:100%;height:auto}
 .qra{display:flex;flex-direction:column;gap:8px}.qra .btn{width:100%}
@@ -362,6 +399,8 @@ background:color-mix(in srgb,var(--c) 14%,var(--sf))}
 <script>window.FAMILY_ONLY=1</script>
 <script>
 const KEY='shiftplanner2';
+/* the guided start's steps, in order (defined early: loading saved data checks against it) */
+const OBSTEPS=['welcome','account','job','rotation','shifts','pay','timeoff','crew','plan'];
 /* ---------- icons ---------- */
 const ICONS={
 sun:'<circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2.4M12 19.4v2.4M4.5 4.5l1.7 1.7M17.8 17.8l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.5 19.5l1.7-1.7M17.8 6.2l1.7-1.7"/>',
@@ -552,7 +591,7 @@ function def(){
   act:{ytd:0,asof:''},ded:[],notif:{payday:0},loc:{wk:0},
   leave:{},offk:offDefaults(),ren:[],stubs:[],start:'',fresh:FRESH,
   banks:[{id:'b1',name:DEFS.lbl.bank,entries:[]},{id:'b2',name:DEFS.lbl.swap,entries:[]}],
-  share:false,following:[],allow:[],hidden:[],teams:[],famName:'',famSnap:null,tpend:null,offWhy:true,theme:'auto',ts:0}}
+  share:false,following:[],allow:[],hidden:[],teams:[],famName:'',famSnap:null,tpend:null,ob:{step:'welcome'},acct:null,job:'',sub:null,offWhy:true,theme:'auto',ts:0}}
 function norm(o){
  if(!o||typeof o!=='object')return def();
  if(!o.v){/* migrate v1 */
@@ -627,6 +666,12 @@ function norm(o){
  ['qk','keys','block'].forEach(k=>{delete s[k]});
  if(typeof s.famName!=='string')s.famName='';
  if(!s.tpend||typeof s.tpend!=='object'||!s.tpend.id)s.tpend=null;
+ /* people who set up before the guided start skip it; anyone mid-way picks up where they left off */
+ if(!o.ob||typeof o.ob!=='object'||!s.ob||typeof s.ob!=='object')s.ob=s.setup?{done:true}:{step:'welcome'};
+ if(!s.ob.done&&OBSTEPS.indexOf(s.ob.step)<0)s.ob.step=s.setup?'shifts':'welcome';
+ if(s.acct&&typeof s.acct!=='object')s.acct=null;
+ if(typeof s.job!=='string')s.job='';
+ if(s.sub&&typeof s.sub!=='object')s.sub=null;
  if(!s.famSnap||typeof s.famSnap!=='object')s.famSnap=null;
  if(['auto','light','dark'].indexOf(s.theme)<0)s.theme='auto';
  s.banks.forEach(b=>b.entries.forEach(e=>{if(typeof e.who!=='string')e.who=''}));
@@ -666,7 +711,7 @@ let S=load(),renMsg='',stubMsg='',tab='cal',ptab='earn',stab='rot',ctab='team',w
 const W={pat:null,types:null,shifts:null,date:ymd(new Date()),was:'',idx:0,own:false};
 function wTypes(){return W.types||(W.types=clone(DEFS.types))}
 function wShifts(){return W.shifts||(W.shifts=clone(DEFS.shifts))}
-function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}push()}
+function save(){S.ts=Date.now();if(SANDBOX)return;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}push()}
 
 /* ---------- schedule ---------- */
 /* editing your cycle or shift times now applies to every day, past and future; a change from a
@@ -849,6 +894,128 @@ function vSetup(){
  <p class="mu" style="margin:8px 0 0">Pay, overtime, shift names and reminders are all on the Setup tab whenever you want them.</p></div>`;
  return h;
 }
+
+
+/* ---------- the guided start: account, job, rotation, shift times, pay, time off, crew, plan ---------- */
+let SANDBOX=null,OBM='',OBERR='',OBD=null,PLANSEL='year',PAYOPEN=false;
+const PRICE={year:{n:'Yearly',p:'$19.99',per:'a year',sub:'$1.67 a month · save 44%'},month:{n:'Monthly',p:'$2.99',per:'a month',sub:'Cancel anytime'}};
+const TRIAL=30;
+const trialLeft=()=>S.sub&&S.sub.status==='trial'?Math.max(0,dIdx(S.sub.end)-dIdx(ymd(new Date()))):null;
+function obGo(step){S.ob={step};OBERR='';OBM='';save();window.scrollTo(0,0);render()}
+function obNext(){const i=OBSTEPS.indexOf(S.ob.step);obGo(OBSTEPS[Math.min(OBSTEPS.length-1,i+1)])}
+function obFinish(){
+ if(SANDBOX){S=SANDBOX;SANDBOX=null;tab='rot';stab='rot';resub();window.scrollTo(0,0);return render()}
+ S.ob={done:true};tab=S.tpend?'crew':'cal';sel=null;save();window.scrollTo(0,0);render()}
+function planHTML(where){
+ const r=PRICE.year,m=PRICE.month,pick=k=>`<button class="plan${PLANSEL===k?' on':''}" data-a="plansel" data-k="${k}" aria-pressed="${PLANSEL===k}">
+   <span class="pr"><b>${PRICE[k].n}</b>${k==='year'?'<i class="best">Best value</i>':''}</span>
+   <span class="pp"><b>${PRICE[k].p}</b> ${PRICE[k].per}</span><span class="mu">${PRICE[k].sub}</span></button>`;
+ return`<div class="plans">${pick('year')}${pick('month')}</div>
+  <button class="btn full obcta" data-a="substart">Start my free month</button>
+  <p class="mu fine">Free for ${TRIAL} days, then ${PRICE[PLANSEL].p} ${PRICE[PLANSEL].per}, renewing automatically until you cancel.
+  Cancel anytime in your App Store or Google Play settings. We’ll remind you 3 days before your free month ends.</p>
+  <p class="mu fine">Restore purchases · Terms of use · Privacy policy</p>
+  <p class="mu fine prev">Preview: nothing is charged in this version. Subscriptions start working in the App Store and Google Play versions.</p>`}
+function vOnboard(){
+ const st=S.ob&&S.ob.step||'welcome',i=OBSTEPS.indexOf(st),n=OBSTEPS.length-1;
+ let h=SANDBOX?`<div class="card obprev"><b>Preview of the new-user setup.</b> Nothing you do here changes your own data.
+  <button class="btn ghost sm" data-a="obexit">Exit preview</button></div>`:'';
+ if(st!=='welcome')h+=`<div class="obtop"><button class="btn ghost sm" data-a="obback" aria-label="Back">‹ Back</button>
+  <div class="obbar" role="progressbar" aria-valuemin="1" aria-valuemax="${n}" aria-valuenow="${i}" aria-label="Step ${i} of ${n}"><i style="width:${Math.round(i/n*100)}%"></i></div>
+  <span class="mu obn">${i} of ${n}</span></div>`;
+ const skip=`<button class="btn ghost full obskip" data-a="obskip">Skip for now</button>`;
+ const err=OBERR?`<p class="err" style="margin:8px 0 0">${esc(OBERR)}</p>`:'';
+ if(st==='welcome')return h+`<div class="obhero">
+  <div class="oblogo" aria-hidden="true">${ic('calendarDot')}</div>
+  <h1>Frontline Shifts</h1>
+  <p class="mu oblead">The shift calendar for police, fire, EMS and nurses.</p></div>
+  <div class="card obpts">
+   <div class="obpt"><i style="--c:var(--c0)">${ic('sun')}</i><div><b>Your rotation, years ahead</b><span class="mu">Set it once. Book a day off in one tap.</span></div></div>
+   <div class="obpt"><i style="--c:var(--ac)">${ic('clock')}</i><div><b>Overtime and paid duty, tracked</b><span class="mu">See what you’re still owed. Check every pay stub.</span></div></div>
+   <div class="obpt"><i style="--c:var(--c1)">${ic('users')}</i><div><b>Your crew at a glance</b><span class="mu">Who’s in and who’s off. Never anyone’s pay.</span></div></div>
+   <div class="obpt"><i style="--c:var(--c4)">${ic('qr')}</i><div><b>Your family in the loop</b><span class="mu">They scan your code. No app, no account.</span></div></div>
+  </div>
+  <button class="btn full obcta" data-a="obnext">Get started</button>
+  <p class="mu" style="text-align:center;margin:10px 0 0">Takes about two minutes.</p>`;
+ if(st==='account'){
+  const a=OBD||S.acct||{},via=OBM;
+  h+=`<h1>Create your account</h1><p class="mu oblead">So your schedule follows you to a new phone, and your crew can find you.</p>`;
+  if(!via){h+=`<div class="obsso">
+   <button class="btn full sso dark" data-a="obvia" data-k="apple">Continue with Apple</button>
+   <button class="btn full sso" data-a="obvia" data-k="google">Continue with Google</button>
+   <button class="btn full sso" data-a="obvia" data-k="microsoft">Continue with Microsoft</button>
+   <div class="obor"><span>or</span></div>
+   <button class="btn ghost full" data-a="obvia" data-k="email">Sign up with email</button></div>`}
+  else{const em=via==='email';
+   h+=`<div class="card"><div class="form">
+    <div class="full"><label for="obname">Your name</label><input id="obname" type="text" autocomplete="name" value="${esc(a.name||'')}" placeholder="First and last name"></div>
+    ${em?`<div class="full"><label for="obemail">Email</label><input id="obemail" type="email" autocomplete="email" inputmode="email" value="${esc(a.email||'')}" placeholder="you@example.com"></div>
+    <div class="full"><label for="obphone">Phone <span class="mu">optional</span></label><input id="obphone" type="tel" autocomplete="tel" inputmode="tel" value="${esc(a.phone||'')}" placeholder="For account recovery"></div>`:''}
+   </div>${err}
+   <button class="btn full obcta" data-a="obacct">Continue</button>
+   <button class="btn ghost full" style="margin-top:8px" data-a="obvia" data-k="">Use a different way</button></div>`}
+  h+=`<p class="mu fine">By continuing you agree to the Terms of use and Privacy policy. Your pay and notes are never shared with anyone.</p>
+  <p class="mu fine prev">Preview: accounts start working with the App Store version${OBM==='email'?', where you’ll also choose a password here':''}. Until then your data saves to your Claude sign-in.</p>`;
+  return h}
+ if(st==='job'){
+  const J=[['police','Police','shield'],['fire','Fire','truck'],['ems','EMS / Paramedic','siren'],['nursing','Nursing','heart'],['other','Something else','dot']];
+  return h+`<h1>What do you do?</h1><p class="mu oblead">We’ll set up the right kinds of extra work for you. You can change them later.</p>
+   <div class="objobs">${J.map(([k,nm,ico])=>`<button class="btn${S.job===k?'':' ghost'} full objob" data-a="objob" data-k="${k}" aria-pressed="${S.job===k}">${ic(ico)} ${nm}</button>`).join('')}</div>
+   <button class="btn full obcta" data-a="obnext"${S.job?'':' disabled'}>Continue</button>`}
+ if(st==='rotation'){
+  const body=vSetup().replace(/^[\s\S]*?(<div class="card"><div class="step">Step 1)/,'$1');
+  const cut=body.lastIndexOf('<div class="card"><button class="btn" style="width:100%" data-a="wdone"');
+  const ok=W.was&&setAnchor();
+  return h+`<h1>Your rotation</h1><p class="mu oblead">Pick the closest one, then line it up with today.</p>`+body.slice(0,cut)
+   +`<button class="btn full obcta" data-a="obrot"${ok?'':' disabled'}>${ok?'That’s my schedule':'Answer step 2 to continue'}</button>`}
+ if(st==='shifts'){
+  const used=S.rot.shifts.filter(x=>S.rot.pattern.indexOf(x.id)>=0);
+  return h+`<h1>Your shift times</h1><p class="mu oblead">Name each shift the way your workplace does, and set its hours.</p>`
+   +used.map(x=>{const k=S.rot.shifts.indexOf(x);return`<div class="card"><div class="form" style="margin:0">
+    <div class="full"><label>${ic(x.i)} Name</label><input type="text" data-f="rot.shifts.${k}.name" value="${esc(x.name)}"></div>
+    <div class="full"><label>Starts</label><input type="time" data-f="rot.shifts.${k}.from" value="${x.from}"></div>
+    <div class="full"><label>Ends</label><input type="time" data-f="rot.shifts.${k}.to" value="${x.to}"></div></div></div>`}).join('')
+   +`<p class="mu" style="margin:0 2px 10px">A shift ending at or before its start time runs overnight.</p>
+   <button class="btn full obcta" data-a="obnext">Looks right</button>`}
+ if(st==='pay'){
+  const r=S.rates,f=freqOf(),fixed=f==='semimonthly'||f==='monthly';
+  return h+`<h1>Your pay</h1><p class="mu oblead">So your overtime and paid duty show what they’re worth. Never shared with anyone.</p>
+   <div class="card"><div class="form" style="margin:0">
+    <div class="full"><label>Your hourly rate ($)</label><input type="text" inputmode="decimal" data-f="rates.base" value="${num(r.base)||''}" placeholder="e.g. 52.40"></div>
+    <div class="full"><label>How often you’re paid</label><select data-f="rates.freq">${Object.keys(FREQ).filter(k=>k!=='even').map(k=>`<option value="${k}"${f===k?' selected':''}>${FREQ[k].n}</option>`).join('')}</select></div>
+    ${fixed?(f==='monthly'?`<div class="full"><label>Day of the month you’re paid</label><input type="number" min="1" max="31" data-f="rates.pd2" value="${num(r.pd2)||31}"></div>`
+     :`<div class="full"><label>First payday of the month</label><input type="number" min="1" max="31" data-f="rates.pd1" value="${num(r.pd1)||15}"></div>
+       <div class="full"><label>Second payday of the month</label><input type="number" min="1" max="31" data-f="rates.pd2" value="${num(r.pd2)||31}"></div>`)
+     :`<div class="full"><label>Your next payday</label><input type="date" data-f="rates.payday" value="${esc(r.payday||'')}"></div>`}
+   </div></div>
+   <button class="btn full obcta" data-a="obnext">Continue</button>${skip}`}
+ if(st==='timeoff'){
+  const ks=offKinds().slice(0,3);
+  return h+`<h1>Your time off</h1><p class="mu oblead">How many hours a year do you get? Leave any you’re not sure of blank.</p>
+   <div class="card"><div class="form" style="margin:0">${ks.map((k,j)=>`<div class="full"><label>${ic(offIcon(k.name))} ${esc(k.name)} <span class="mu">hours a year</span></label>
+    <input type="text" inputmode="decimal" data-f="offk.${j}.allow" value="${num(k.allow)||''}" placeholder="e.g. 120"></div>`).join('')}</div></div>
+   <button class="btn full obcta" data-a="obnext">Continue</button>${skip}`}
+ if(st==='crew'){
+  const tp=S.tpend&&!S.teams.some(t=>t.id===S.tpend.id);
+  return h+`<h1>Your crew and family</h1><p class="mu oblead">See who’s in and who’s off, and let your family see your schedule.</p>
+   ${S.teams.length?`<div class="card"><h2>You’re in ${esc(S.teams.map(t=>t.name).join(', '))}</h2><p class="mu" style="margin:0">Your team’s week is on the Crew tab.</p></div>`
+    :tp?`<div class="card"><h2>Join <span class="nm">${esc(S.tpend.name)}</span>?</h2><p class="mu" style="margin:0 0 10px">You were invited. Your shifts and time off are shared with them — never your pay.</p>
+      <button class="btn full" data-a="tpjoin">Join team</button></div>`
+    :`<div class="card"><h2>Join your team</h2><p class="mu" style="margin:0">Scan a coworker’s team invite with your camera, or type their join code.</p>
+      <div class="form"><div class="full"><label for="tcd">Join code</label><input id="tcd" type="text" autocapitalize="characters" autocomplete="off" placeholder="e.g. 4KPQ7M"></div>
+      <button class="btn ghost full" data-a="tjoin">Join team</button></div>${X.msg?`<p class="err" style="margin:8px 0 0">${esc(X.msg)}</p>`:''}</div>`}
+   <div class="card"><h2>Your family</h2><p class="mu" style="margin:0">When you’re ready, the Crew tab makes a QR code they can scan to see your schedule. No app, no account.</p></div>
+   <button class="btn full obcta" data-a="obnext">Continue</button>${S.teams.length?'':skip}`}
+ if(st==='plan')return h+`<h1>Try everything free for ${TRIAL} days</h1>
+   <p class="mu oblead">Your calendar is ready. Keep all of it with Frontline Shifts Pro.</p>
+   <div class="card obpts">
+    <div class="obpt"><i style="--c:var(--c0)">${ic('calendarDot')}</i><div><b>Your rotation and time off</b></div></div>
+    <div class="obpt"><i style="--c:var(--ac)">${ic('wallet')}</i><div><b>Overtime, pay and stub checks</b></div></div>
+    <div class="obpt"><i style="--c:var(--c1)">${ic('users')}</i><div><b>Your crew’s week</b></div></div>
+    <div class="obpt"><i style="--c:var(--c4)">${ic('qr')}</i><div><b>Your family’s code</b></div></div>
+   </div>${planHTML('ob')}
+   <button class="btn ghost full obskip" data-a="subno">Not now</button>`;
+ return h}
 
 /* ---------- a schedule change booked ahead ---------- */
 let PLAN=null;
@@ -1235,6 +1402,9 @@ function vDash(){
  const offTxt=g=>`${g.n} day${g.n===1?'':'s'} off · ${dl(g.f)}${g.n>1?' to '+dl(g.l):''}`;
  const desc=s=>`<i class="lg" style="--c:${s.c}">${ic(s.i)}</i> ${esc(s.name)} · ${dl(s.st)}, ${tm(s.st)}–${tm(s.en)}${s.ovr?' (changed)':''}`;
  let h='<h1>Dashboard</h1>';
+ {const tl=trialLeft();if(tl!==null&&tl<=3)h+=`<div class="card" style="--c:var(--ac)"><h2>Your free month ends ${tl===0?'today':tl===1?'tomorrow':'in '+tl+' days'}</h2>
+  <p class="mu" style="margin:0 0 8px">After that it\u2019s ${PRICE[S.sub.plan||'year'].p} ${PRICE[S.sub.plan||'year'].per}. Cancel or change it any time.</p>
+  <button class="btn ghost sm" data-a="subopen">Manage plan</button></div>`}
  if(!nx&&!cur)h+=`<div class="card"><h2>No shifts yet</h2><p class="mu">Set up your rotation to start the countdowns.</p>
   <button class="btn" data-a="goto" data-t2="rot" data-s="rot">Set up rotation</button></div>`;
  else{
@@ -1649,14 +1819,21 @@ function vRot(){
    <div class="row">${[['auto','Match my phone'],['light','Always light'],['dark','Always dark']].map(([k,n])=>
     `<button class="btn${(S.theme||'auto')===k?'':' ghost'} sm" data-a="theme" data-k="${k}">${n}</button>`).join('')}</div>`+FE;
 
+ const tl=trialLeft();
+ let PL=fold('Your Plan',S.sub&&S.sub.status==='trial'?`Free month \u00b7 ${tl} day${tl===1?'':'s'} left`:'Not subscribed')
+  +(S.sub&&S.sub.status==='trial'?`<p class="mu" style="margin:0">Your free month ends ${dl(P(S.sub.end),{weekday:'long',month:'long',day:'numeric'})}, then ${PRICE[S.sub.plan||'year'].p} ${PRICE[S.sub.plan||'year'].per}.</p>
+   <div class="chips"><button class="btn ghost sm" data-a="subopen">Change plan</button><button class="btn ghost sm" data-a="subcancel">Cancel free month</button></div>`
+   :`<p class="mu" style="margin:0">Frontline Shifts Pro: ${PRICE.year.p} a year or ${PRICE.month.p} a month, with your first ${TRIAL} days free.</p>
+   <div class="chips"><button class="btn sm" data-a="subopen">See plans</button></div>`)+FE;
  let D=`<div class="card"><h2>Your data</h2>`;
  if(X.state==='ready')D+=`<p class="mu" style="margin:0">Saved to your account as <b data-n="${esc(X.id||'')}">you</b>, so it follows you to a new phone or browser on its own.${
    X.synced?` Last saved at ${tm(new Date(X.synced))}.`:''}${X.msg?` <span class="err">${esc(X.msg)}</span>`:''}</p>`;
  else if(X.state==='loading')D+=`<p class="mu" style="margin:0">Checking whether you're signed in\u2026</p>`;
  else D+=`<p class="mu" style="margin:0"><b>This device holds the only copy.</b> Clearing your browser data would take it with it. Open the app from its claude.ai link while signed in and it saves to your account by itself \u2014 until then, keep a backup file somewhere safe.</p>`;
- D+=`<div class="chips"><button class="btn ghost sm" data-a="goto" data-t2="pay" data-p="earn">Backup and restore</button></div></div>`;
+ D+=`<div class="chips"><button class="btn ghost sm" data-a="goto" data-t2="pay" data-p="earn">Backup and restore</button>
+  <button class="btn ghost sm" data-a="obpreview">Preview the new-user setup</button></div></div>`;
  /* top to bottom: your cycle, shift types, unit and schedule changes, calendar, appearance, your data */
- return h+U+C+D;
+ return h+U+C+PL+D;
 }
 const OPEN={};
 const fold=(t,sum,op)=>{const k=String(t).toLowerCase().replace(/[^a-z0-9]+/g,'');
@@ -1965,7 +2142,7 @@ function render(){
  if(FAMQ||FAMONLY){tb.hidden=true;const w=document.getElementById('sheet');if(w){w.hidden=true;w.innerHTML=''}
   el.innerHTML=famView()+apph();try{titleCase(el)}catch(e){}RTAB='fam';return}
  drawTabs();drawUndo();drawSheet();
- if(!S.setup){tb.hidden=true;el.innerHTML=vSetup()+apph();reopen(el,keep);try{titleCase(el)}catch(e){}RTAB=viewKey();return}
+ if(!S.setup||(S.ob&&!S.ob.done)){tb.hidden=true;el.innerHTML=vOnboard()+apph();reopen(el,keep);try{titleCase(el)}catch(e){}RTAB=viewKey();return}
  tb.hidden=false;
  el.innerHTML=({cal:vCal,dash:vDash,pay:vPay,rot:vConfig,crew:vCrew}[tab]||vCal)()+(tab==='cal'?'':apph());
  reopen(el,keep);RTAB=viewKey();
@@ -2004,6 +2181,13 @@ function drawSheet(){
     <button class="x" data-a="keyclose" aria-label="Close">${ic('xmark')}</button></div>
    <div class="shb"><div class="card">${keyHTML()}</div></div></div>`;
   try{titleCase(w)}catch(e){}SHOWN='key';return}
+ if(PAYOPEN&&S.setup&&S.ob&&S.ob.done){
+  w.hidden=false;try{document.body.classList.add('lock')}catch(e){}
+  w.innerHTML=`<div class="bd" data-a="subclose"></div><div class="sh" role="dialog" aria-modal="true" aria-label="Plans">
+   <div class="shh"><span class="grab"></span><div class="sht"><h2>Frontline Shifts Pro</h2><span class="sub">${TRIAL} days free, then pick a plan</span></div>
+    <button class="x" data-a="subclose" aria-label="Close">${ic('xmark')}</button></div>
+   <div class="shb"><div class="card">${planHTML('sheet')}</div></div></div>`;
+  try{titleCase(w)}catch(e){}SHOWN='plan';return}
  if(TINV&&S.setup&&tab==='crew'){const t=S.teams.find(q=>q.id===TINV);
   if(t){w.hidden=false;try{document.body.classList.add('lock')}catch(e){}
   w.innerHTML=`<div class="bd" data-a="tinvclose"></div>
@@ -2135,12 +2319,47 @@ const A={
   mark(`${x.unit||'Schedule change'} from ${dl(P(x.from),{month:'short',day:'numeric'})} cancelled.`);
   S.plans=S.plans.filter(q=>q.id!==D.id);save();render()},
  wnext(){W.idx++;render()},
+ obnext(){obNext()},
+ obback(){const i=OBSTEPS.indexOf(S.ob.step);if(i>0)obGo(OBSTEPS[i-1])},
+ obskip(){obNext()},
+ obvia(D){OBM=D.k||'';OBERR='';
+  if(OBM&&OBM!=='email'&&!(S.acct&&S.acct.name)&&X.user&&X.id){X.user.profiles([X.id]).then(ps=>{const nm=(ps[X.id]&&ps[X.id].name)||'';
+   if(nm&&!(S.acct&&S.acct.name)){S.acct=Object.assign({},S.acct,{name:nm});render()}}).catch(()=>{})}
+  render()},
+ obacct(){const nm=(V('obname')||'').trim(),em=(V('obemail')||'').trim(),ph=(V('obphone')||'').trim();
+  OBD={name:nm,email:em,phone:ph};   /* what they typed stays put while they fix a mistake */
+  if(!nm){OBERR='Add your name to continue.';return render()}
+  if(OBM==='email'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){OBERR='That email doesn\u2019t look right. Check it and try again.';return render()}
+  S.acct={via:OBM||'email',name:nm.slice(0,60),email:OBM==='email'?em.slice(0,120):'',phone:OBM==='email'?ph.slice(0,30):'',at:ymd(new Date())};
+  if(!S.famName)S.famName=nm.split(/\s+/)[0].slice(0,40);
+  OBM='';OBD=null;obNext()},
+ objob(D){S.job=D.k;
+  /* police get paid duty and court from the start; everyone keeps the general kinds */
+  W.types=clone(DEFS.types);
+  if(D.k==='police')EXTRAS.filter(x=>x[0]==='Paid duty'||x[0]==='Court').forEach(f=>W.types.push(ty(uid(),f[0],f[1],f[2],f[3],f[4],f[5],f[6],f[7])));
+  save();render()},
+ obrot(){if(!W.was||!setAnchor())return;
+  S.rot={pattern:setupPat().slice(),anchor:W.anchor,shifts:clone(wShifts())};
+  S.types=clone(wTypes());if(!S.start)S.start=ymd(new Date());
+  S.setup=true;obGo('shifts')},
+ obexit(){obFinish()},
+ plansel(D){PLANSEL=D.k==='month'?'month':'year';render()},
+ substart(){const t=ymd(new Date()),e=new Date();e.setDate(e.getDate()+TRIAL);
+  S.sub={status:'trial',plan:PLANSEL,start:t,end:ymd(e)};PAYOPEN=false;
+  if(S.ob&&!S.ob.done)return obFinish();mark('Free month started.');save();render()},
+ subno(){if(!S.sub)S.sub={status:'none',at:ymd(new Date())};if(S.ob&&!S.ob.done)return obFinish();PAYOPEN=false;save();render()},
+ subopen(){PAYOPEN=true;render()},
+ subclose(){PAYOPEN=false;render()},
+ subcancel(){mark('Free month cancelled.');S.sub={status:'none',at:ymd(new Date())};PAYOPEN=false;save();render()},
+ obpreview(){SANDBOX=clone(S);S=def();S.ob={step:'welcome'};
+  W.pat=null;W.types=null;W.shifts=null;W.date=ymd(new Date());W.was='';W.idx=0;W.own=false;OBM='';OBERR='';
+  window.scrollTo(0,0);render()},
  wdone(){
   if(!W.was||!setAnchor())return;
   S.rot={pattern:setupPat().slice(),anchor:W.anchor,shifts:clone(wShifts())};
   S.types=clone(wTypes());
   if(!S.start)S.start=ymd(new Date());
-  S.setup=true;tab=S.tpend?'crew':'cal';save();render()},
+  S.setup=true;S.ob={done:true};tab=S.tpend?'crew':'cal';save();render()},
  rerun(){snap();W.pat=S.rot.pattern.slice();W.types=clone(S.types);W.shifts=clone(S.rot.shifts);
   W.date=ymd(new Date());W.was='';W.idx=0;W.own=false;
   S.setup=false;save();render()},
@@ -2347,7 +2566,7 @@ document.addEventListener('click',e=>{
  const t=e.target.closest('[data-t]');
  if(t&&t.dataset.t){if(t.dataset.t==='cal'){const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);CALJUMP=true}
   /* leaving the calendar (or coming back to it) puts it back to its usual few months */
-  if(t.dataset.t!==tab||t.dataset.t==='cal'){MOB=1;MOA=4}KEYOPEN=false;TINV=null;FAMOPEN=false;
+  if(t.dataset.t!==tab||t.dataset.t==='cal'){MOB=1;MOA=4}KEYOPEN=false;TINV=null;FAMOPEN=false;PAYOPEN=false;
   tab=t.dataset.t;sel=null;editId=null;window.scrollTo(0,0);return render()}
  const b=e.target.closest('[data-a]');if(!b)return;
  const f=A[b.dataset.a]||CR[b.dataset.a];if(!f)return;
@@ -2362,6 +2581,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&KEYOPEN){KEYOPEN=false;return render()}
  if(e.key==='Escape'&&TINV){TINV=null;return render()}
+ if(e.key==='Escape'&&PAYOPEN){PAYOPEN=false;return render()}
  if(e.key==='Escape'&&FAMOPEN){FAMOPEN=false;return render()}
  if(e.key==='Escape'&&sel){sel=null;editId=null;addMsg=null;ovMsg=null;render()}});
 document.addEventListener('keydown',e=>{
