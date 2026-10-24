@@ -856,20 +856,9 @@ function setAnchor(){
  const d=P(W.date);d.setDate(d.getDate()-i);
  W.anchor=ymd(d);return true;
 }
-function vSetup(){
- const p=setupPat(),on=p.filter(x=>x!=='O').length,tdy=ymd(new Date()),same=W.date===tdy;
- let h=`<h1>Set up your rotation</h1><p class="mu">Two steps and you're in. Everything can be changed later.</p>`;
- h+=`<div class="card"><div class="step">Step 1 of 2</div><h2>Pick your rotation</h2>
- <p class="mu" style="margin:0">The closest one is fine — you can change any day of it.</p>
- ${preHTML('wpre',p)}
- <p style="margin:6px 0 0"><b>${p.length}-day cycle</b> <span class="mu">· ${cycleMix(p,wShifts())}</span></p>
- <details${W.own?' open':''}><summary>Build it day by day</summary>
- <div class="form"><div class="full"><label>Cycle length in days (1 to 84)</label>
- <input id="wlen" type="number" min="1" max="84" value="${p.length}"></div></div>
- <p class="mu" style="margin:8px 0 0">Tap a day to change what you work on it.</p>
- <div class="chips">${p.map((l,i)=>{const d=shiftDef(wShifts(),l);
-  return`<button class="pc${l!=='O'?' on':''}" style="--c:${d?colr(d.c):'var(--off)'}" data-a="wcyc" data-i="${i}" aria-label="Day ${i+1}, ${d?esc(d.name):'off'}">${i+1}<span>${d?ic(d.i):'–'}</span></button>`}).join('')}</div>
- </details></div>`;
+/* step 2 of setting up a rotation: which day of the cycle is today */
+function lineUp(){
+ const p=setupPat(),tdy=ymd(new Date()),same=W.date===tdy;let h='';
  h+=`<div class="card"><div class="step">Step 2 of 2</div><h2>Line it up with your real week</h2>
  <p class="mu" style="margin:0">What ${same?'are you working today':'did you work on '+dl(P(W.date),{weekday:'long',month:'long',day:'numeric'})}?</p>
  <div class="chips">${wShifts().filter(x=>p.indexOf(x.id)>=0).map(x=>`<button class="btn${W.was===x.id?'':' ghost'} sm ico" data-a="wwas" data-k="${x.id}">${ic(x.i)} ${esc(x.name)}</button>`).join('')}
@@ -889,6 +878,22 @@ function vSetup(){
  h+=`<details><summary>Use a different day instead</summary>
  <div class="form"><div class="full"><label>Date</label>
  <input id="wdate" type="date" value="${W.date}"></div></div></details></div>`;
+ return h}
+function vSetup(){
+ const p=setupPat(),on=p.filter(x=>x!=='O').length,tdy=ymd(new Date()),same=W.date===tdy;
+ let h=`<h1>Set up your rotation</h1><p class="mu">Two steps and you're in. Everything can be changed later.</p>`;
+ h+=`<div class="card"><div class="step">Step 1 of 2</div><h2>Pick your rotation</h2>
+ <p class="mu" style="margin:0">The closest one is fine — you can change any day of it.</p>
+ ${preHTML('wpre',p)}
+ <p style="margin:6px 0 0"><b>${p.length}-day cycle</b> <span class="mu">· ${cycleMix(p,wShifts())}</span></p>
+ <details${W.own?' open':''}><summary>Build it day by day</summary>
+ <div class="form"><div class="full"><label>Cycle length in days (1 to 84)</label>
+ <input id="wlen" type="number" min="1" max="84" value="${p.length}"></div></div>
+ <p class="mu" style="margin:8px 0 0">Tap a day to change what you work on it.</p>
+ <div class="chips">${p.map((l,i)=>{const d=shiftDef(wShifts(),l);
+  return`<button class="pc${l!=='O'?' on':''}" style="--c:${d?colr(d.c):'var(--off)'}" data-a="wcyc" data-i="${i}" aria-label="Day ${i+1}, ${d?esc(d.name):'off'}">${i+1}<span>${d?ic(d.i):'–'}</span></button>`}).join('')}</div>
+ </details></div>`;
+ h+=lineUp();
  const ok=W.was&&setAnchor();
  h+=`<div class="card"><button class="btn" style="width:100%" data-a="wdone"${ok?'':' disabled'}>${ok?'That’s my schedule — start':'Answer step 2 to start'}</button>
  <p class="mu" style="margin:8px 0 0">Pay, overtime, shift names and reminders are all on the Setup tab whenever you want them.</p></div>`;
@@ -963,11 +968,21 @@ function vOnboard(){
    <div class="objobs">${J.map(([k,nm,ico])=>`<button class="btn${S.job===k?'':' ghost'} full objob" data-a="objob" data-k="${k}" aria-pressed="${S.job===k}">${ic(ico)} ${nm}</button>`).join('')}</div>
    <button class="btn full obcta" data-a="obnext"${S.job?'':' disabled'}>Continue</button>`}
  if(st==='rotation'){
-  const body=vSetup().replace(/^[\s\S]*?(<div class="card"><div class="step">Step 1)/,'$1');
-  const cut=body.lastIndexOf('<div class="card"><button class="btn" style="width:100%" data-a="wdone"');
-  const ok=W.was&&setAnchor();
-  return h+`<h1>Your rotation</h1><p class="mu oblead">Pick the closest one, then line it up with today.</p>`+body.slice(0,cut)
-   +`<button class="btn full obcta" data-a="obrot"${ok?'':' disabled'}>${ok?'That’s my schedule':'Answer step 2 to continue'}</button>`}
+  if(!W.pat)W.pat=Array(7).fill('O');                 /* start blank: every day off until they tap it */
+  const p=setupPat(),on=p.filter(x=>x!=='O').length,sh=wShifts(),ok=on>0&&W.was&&setAnchor();
+  return h+`<h1>Your rotation</h1><p class="mu oblead">Build it the way your schedule actually runs. You can change it any time.</p>
+   <div class="card"><div class="step">Step 1 of 2</div><h2>How many days until it repeats?</h2>
+    <div class="form"><div class="full"><label for="wlen">Days in your rotation</label>
+    <input id="wlen" type="number" inputmode="numeric" min="1" max="84" value="${p.length}"></div></div>
+    <p class="mu" style="margin:6px 0 0">Four on, four off is 8 days. Seven on, seven off is 14.</p>
+    <h3>Tap each day to set it</h3>
+    <p class="mu" style="margin:0 0 6px">Each tap moves it along: Off, then ${sh.map(x=>esc(x.name)).join(', then ')}.</p>
+    <div class="chips">${p.map((l,k)=>{const d=shiftDef(sh,l);
+     return`<button class="pc${l!=='O'?' on':''}" style="--c:${d?colr(d.c):'var(--off)'}" data-a="wcyc" data-i="${k}" aria-label="Day ${k+1}, ${d?esc(d.name):'off'}">${k+1}<span>${d?ic(d.i):'–'}</span></button>`}).join('')}</div>
+    <p style="margin:8px 0 0"><b>${p.length}-day rotation</b> <span class="mu">· ${on?cycleMix(p,sh):'all days off so far'}</span></p></div>
+   ${on?lineUp():`<div class="card"><div class="step">Step 2 of 2</div><h2>Line it up with your real week</h2>
+    <p class="mu" style="margin:0">Tap the days you work first, then this step lines them up with today.</p></div>`}
+   <button class="btn full obcta" data-a="obrot"${ok?'':' disabled'}>${ok?'That’s my rotation':on?'Answer step 2 to continue':'Tap the days you work'}</button>`}
  if(st==='shifts'){
   const used=S.rot.shifts.filter(x=>S.rot.pattern.indexOf(x.id)>=0);
   return h+`<h1>Your shift times</h1><p class="mu oblead">Name each shift the way your workplace does, and set its hours.</p>`
