@@ -230,7 +230,8 @@ body.lock{overflow:hidden}
 .objob svg{width:20px;height:20px}
 .fine{font-size:12.5px;margin:10px 2px 0;line-height:1.45}
 .fine.prev{color:var(--c6)}
-.obprev{display:flex;flex-direction:column;gap:8px;border-color:var(--ac)}
+.obprev{display:flex;flex-direction:column;gap:8px;border-color:var(--ac);margin-top:60px}
+.obprev+.obhero{margin-top:28px}
 .plans{display:grid;gap:10px;margin-top:4px}
 .plan{display:grid;gap:2px;text-align:left;padding:14px 16px;border-radius:14px;border:2px solid var(--ln);background:var(--sf);color:var(--ink);font:inherit;cursor:pointer}
 .plan.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--sf))}
@@ -1786,7 +1787,9 @@ function vPay(){
 /* ---------- rotations ---------- */
 function vRot(){
  const p=S.rot.pattern,on=p.filter(x=>x!=='O').length;
- let h='';
+ /* the guided start, as someone new sees it, one tap away while the app is being tried out */
+ let h=`<div class="card"><h2>New-User Setup</h2><p class="mu" style="margin:0">See what someone new sees the first time they open the app. Your own schedule isn't touched.</p>
+  <button class="btn full" data-a="obpreview" style="margin-top:12px">Walk Through the Setup</button></div>`;
  const pl=S.plans||[],pdl=d=>dl(P(d),{weekday:'short',month:'short',day:'numeric'});
  let U=fold('Unit Name and Schedule Changes',`${S.rot.unit?esc(S.rot.unit)+' now':'No unit set'} \u00b7 ${
    pl.length?esc(pl[0].unit||'new schedule')+' from '+pdl(pl[0].from):'no change booked'}`)+`
@@ -1854,7 +1857,7 @@ function vRot(){
  else if(X.state==='loading')D+=`<p class="mu" style="margin:0">Checking whether you're signed in\u2026</p>`;
  else D+=`<p class="mu" style="margin:0"><b>This device holds the only copy.</b> Clearing your browser data would take it with it. Open the app from its claude.ai link while signed in and it saves to your account by itself \u2014 until then, keep a backup file somewhere safe.</p>`;
  D+=`<div class="chips"><button class="btn ghost sm" data-a="goto" data-t2="pay" data-p="earn">Backup and restore</button>
-  <button class="btn ghost sm" data-a="obpreview">Preview the new-user setup</button></div></div>`;
+</div></div>`;
  /* top to bottom: your cycle, shift types, unit and schedule changes, calendar, appearance, your data */
  return h+U+C+PL+D;
 }
