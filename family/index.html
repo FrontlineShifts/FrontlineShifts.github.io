@@ -59,7 +59,7 @@ padding:3px 2px;display:flex;flex-direction:column;align-items:center;line-heigh
 .cell .ic{font-size:15px;min-height:17px;letter-spacing:-1px}
 .cell .ba{display:flex;gap:2px;min-height:0}
 .cell .nt{font-size:11px;line-height:1.1;color:var(--mu);text-align:center;max-width:100%;
-overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;-webkit-hyphens:auto;hyphens:auto}
 .cell.w{background:color-mix(in srgb,var(--c) 15%,var(--sf));border-color:color-mix(in srgb,var(--c) 55%,var(--ln))}
 .cell.ovr{border-style:dashed;border-width:2px}
 .cell.today .d{background:var(--ink);color:var(--sf);border-radius:20px;padding:0 6px}
@@ -206,6 +206,10 @@ body.lock{overflow:hidden}
 .obn{font-size:13px;flex:none}
 .oblead{margin:4px 0 16px;font-size:16px}
 .obhero{text-align:center;margin-top:60px;padding:4px 0 8px}
+.boot{text-align:center;padding-top:30vh}
+.boot .oblogo{width:64px;height:64px;border-radius:17px}
+.boot .oblogo svg{width:40px;height:40px}
+.boot p{margin:14px 0 0}
 .obhero h1{font-size:38px;margin-top:18px}
 .oblogo{width:84px;height:84px;margin:0 auto;border-radius:22px;background:#1f4e8c;display:grid;place-items:center;color:#fff}
 .oblogo svg{width:52px;height:52px}
@@ -703,11 +707,15 @@ function norm(o){
 /* one clean start: anything saved before this mark is set aside, so the app opens as if just installed */
 const FRESH='2026-10-20';
 const isFresh=o=>!!o&&o.fresh===FRESH;
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(isFresh(o))return norm(o)}}catch(e){}return def()}
+let HADLOCAL=false;
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(isFresh(o)){const n=norm(o);HADLOCAL=true;return n}}}catch(e){}return def()}
 const AGW0=8;
 let UNDO=null,ERRMSG='',agWeeks=AGW0;
 let S=load(),renMsg='',stubMsg='',tab='cal',ptab='earn',stab='rot',ctab='team',wview=new Date(),addMsg=null,ovMsg=null,cview='month',sel=null,dmode='',dtype='',dkeep={},tyOpen=-1,shOpen=-1,offOpen=-1,bkOpen=null,stubOpen=false,editId=null,editNote=null,payYear=new Date().getFullYear(),LASTM=[],
     view=new Date();view=new Date(view.getFullYear(),view.getMonth(),1);
+/* nothing saved on this device yet: wait for the account copy before deciding this is a new user,
+   so a returning user never sees the welcome screen flash up and vanish */
+let BOOT=!HADLOCAL&&!window.FAMILY_ONLY&&!!(window.claude&&window.claude.use);
 const W={pat:null,types:null,shifts:null,date:ymd(new Date()),was:'',idx:0,own:false};
 function wTypes(){return W.types||(W.types=clone(DEFS.types))}
 function wShifts(){return W.shifts||(W.shifts=clone(DEFS.shifts))}
@@ -2156,6 +2164,7 @@ function render(){
  applyTheme();
  if(FAMQ||FAMONLY){tb.hidden=true;const w=document.getElementById('sheet');if(w){w.hidden=true;w.innerHTML=''}
   el.innerHTML=famView()+apph();try{titleCase(el)}catch(e){}RTAB='fam';return}
+ if(BOOT){tb.hidden=true;el.innerHTML=`<div class="boot" role="status"><div class="oblogo" aria-hidden="true">${ic('calendarDot')}</div><p class="mu">Loading your schedule\u2026</p></div>`;RTAB='boot';return}
  drawTabs();drawUndo();drawSheet();
  if(!S.setup||(S.ob&&!S.ob.done)){tb.hidden=true;el.innerHTML=vOnboard()+apph();reopen(el,keep);try{titleCase(el)}catch(e){}RTAB=viewKey();return}
  tb.hidden=false;
@@ -2807,7 +2816,7 @@ const BASE='https://claude.ai/artifact/XJNNkwL7Lhir6C3bKML8Mp',
  X={db:null,user:null,id:null,synced:0,state:'loading',team:{},msg:'',subs:[],cell:null,imp:null,impmsg:'',impbad:false};
 let pt=null;
 function push(){
- if(!X.db||!X.id)return;clearTimeout(pt);
+ if(!X.db||!X.id||!X.cloudOK)return;clearTimeout(pt);
  pt=setTimeout(async()=>{try{
   await X.db.doc('data/users/'+X.id+'/app').set(clone(S));X.synced=Date.now();
   const card={share:!!S.share,teams:S.teams.map(t=>t.id),tnames:{},ts:Date.now()};
@@ -3035,15 +3044,19 @@ document.addEventListener('input',e=>{if(e.target.id!=='famnm')return;
  try{
   if(X.user)X.id=(await X.user.me()).id;
   if(X.db&&X.id){
-   try{const sn=await X.db.doc('data/users/'+X.id+'/app').get();
-    if(sn.exists){const d=sn.data();
-     if(!isFresh(d))save();
-     else if((d.ts||0)>(S.ts||0)){S=norm(d);
-     try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}}}catch(e){}
+   /* read the account copy before anything is written back, so a new phone never overwrites it */
+   let sn=null;for(let k=0;k<2&&!sn;k++){try{sn=await X.db.doc('data/users/'+X.id+'/app').get()}catch(e){if(!k)await new Promise(r=>setTimeout(r,1500))}}
+   if(sn){X.cloudOK=true;
+    const d=sn.exists?sn.data():null;
+    if(!d||!isFresh(d)){if(S.setup)save()}
+    else if((d.ts||0)>(S.ts||0)||(!HADLOCAL&&d.setup&&!S.setup)){S=norm(d);HADLOCAL=true;
+     try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+    else if((S.ts||0)>(d.ts||0))push()}
    resub();
    X.state='ready'}
   else X.state='off';
  }catch(e){X.state='off'}
+ BOOT=false;
  /* opened from a team's invite code: ask whether to join (after setting up, for someone new) */
  let tq='',tn='';try{const u=new URLSearchParams(location.search);tq=u.get('team')||'';tn=u.get('n')||''}catch(e){}
  tq=String(tq).toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -3061,5 +3074,7 @@ function tickDash(){if(tab!=='dash'||!S.setup)return;
 setInterval(tickDash,1000);
 setInterval(()=>{if(S.setup)fireAlerts()},60000);
 setTimeout(()=>{if(S.setup)fireAlerts()},4000);
+/* if the account is slow to answer, don't leave anyone on the loading screen */
+setTimeout(()=>{if(BOOT){BOOT=false;render()}},6000);
 render();
 </script></body></html>
